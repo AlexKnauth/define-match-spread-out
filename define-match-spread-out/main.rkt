@@ -3,20 +3,22 @@
 (provide define*)
 
 (require racket/match
+         syntax/parse/define
          (for-syntax racket/base
                      racket/list
                      racket/match
                      syntax/parse
+                     racket/syntax
+                     unstable/syntax
                      ))
 
 (begin-for-syntax
-  ;; intro : Syntax -> Syntax
-  (define intro (make-syntax-introducer))
-  ;; f->f* : Identifier -> Identifier
-  ;; f is the id suplied to (define* (f arg ...) body ...)
-  ;; f->f* produces the id that is, or will be, defined as (define-syntax f* the-define*-info-lst)
-  (define (f->f* f)
-    (syntax-local-introduce (intro (syntax-local-introduce f))))
+  (struct define*-binding (id define*-info)
+    #:property prop:procedure
+    (λ (this stx)
+      (define/syntax-parse id (define*-binding-id this))
+      (define proc (set!-transformer-procedure (make-variable-like-transformer #'(unbox id))))
+      (proc stx)))
   (struct define*-info (n args bodys) #:prefab)
   ;; n : Natural             ; This might be generalized later to a full arity+keywords
   ;; args : (Listof Syntax)
@@ -51,27 +53,36 @@
     #'(case-lambda case-lambda-clause ...))
   )
 
-(define-syntax define*
+(define-syntax maybe-define-define*-binding
+  (syntax-parser
+    [(maybe-def f:id)
+     (if (syntax-local-value #'f (λ () #f))
+         (syntax-property
+          #'(define-values () (values))
+          'disappeared-binding (list (syntax-local-introduce #'f)))
+         (with-syntax ([id (generate-temporary #'f)])
+           #'(begin
+               (define id (box (let ([f (case-lambda)]) f)))
+               (define-syntax f (define*-binding #'id (define*-info-lst '()))))))]))
+
+(define-syntax define*-add!
   (lambda (stx)
     (syntax-parse stx
       [(define* (f:id arg-pat:expr ...) body:expr ...)
-       #:with f* (f->f* #'f)
-       (define v (syntax-local-value #'f* (λ () #f)))
+       (match-define (define*-binding id info-lst) (syntax-local-value #'f))
        (define arg-pats (syntax->list #'(arg-pat ...)))
        (define n (length arg-pats))
        (define bodys (syntax->list #'(body ...)))
        (define di (define*-info n arg-pats bodys))
-       (cond
-         [(define*-info-lst? v)
-          (define*-info-lst-add! v di)
-          (define/syntax-parse match-lambda-ish
-            (define*-info-lst->match-lambda-ish v))
-          #'(set! f match-lambda-ish)]
-         [else
-          (define dil
-            (define*-info-lst (list di)))
-          (define/syntax-parse match-lambda-ish
-            (define*-info-lst->match-lambda-ish dil))
-          #`(begin (define-syntax f* #,dil)
-                   (define f match-lambda-ish))])])))
+       (define*-info-lst-add! info-lst di)
+       (define/syntax-parse f* (syntax-local-introduce id))
+       (define/syntax-parse match-lambda-ish
+         (define*-info-lst->match-lambda-ish info-lst))
+       #'(set-box! f* (procedure-rename match-lambda-ish 'f))]
+      )))
+
+(define-simple-macro (define* (f:id arg-pat:expr ...) body:expr ...+)
+  (begin
+    (maybe-define-define*-binding f)
+    (define*-add! (f arg-pat ...) body ...)))
 
