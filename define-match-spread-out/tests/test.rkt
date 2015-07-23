@@ -24,8 +24,8 @@
 (define* (+ (? exact-integer? a) b)
   (+ (add1 a) (sub1 b)))
 (define* (+ a (? exact-integer? b)) (+ b a))
-(define* (+ a b c)
-  (+ (+ a b) c))
+(define* (+ a b . rst)
+  (apply + (+ a b) rst))
 
 (check-equal? (+ 3000 140 1.59) 3141.59)
 (check-equal? (+ -3000 -140 -1.59) -3141.59)
