@@ -1,5 +1,7 @@
 #lang racket/base
 
+(provide f +)
+
 (require rackunit
          racket/match
          "../main.rkt"
