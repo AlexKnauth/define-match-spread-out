@@ -14,11 +14,11 @@
                      ))
 
 (begin-for-syntax
-  ;; (define*-binding box-id clauses next-id
+  ;; (define*-binding box-id clauses next-id)
   ;; box-id: Identifier ; points to a box at runtime containing the function
   ;; clauses: Syntax ; a syntax list (at compile time) containing the match*-case-lambda clauses
   ;; next-id: Identifier ; points to the next identifier, which is or will be the next define*-binding
-  ;;   if the next define*-binding exists, then this one il old
+  ;;   if the next define*-binding exists, then this one is old
   (struct define*-binding (box-id clauses next-id)
     #:property prop:procedure
     (λ (this stx)
@@ -49,35 +49,34 @@
          (syntax-property
           #'(define-values () (values))
           'disappeared-binding (list (syntax-local-introduce #'f)))
-         (with-syntax ([id (generate-temporary #'f)]
+         (with-syntax ([box-id (generate-temporary #'f)]
                        [next (generate-temporary #'f)])
            #'(begin
-               (define id (box (let ([f (case-lambda)]) f)))
+               (define box-id (box (let ([f (case-lambda)]) f)))
                (define-syntax f
-                 (define*-binding (quote-syntax id) (quote-syntax ()) (quote-syntax next))))))]))
+                 (define*-binding (quote-syntax box-id) (quote-syntax ()) (quote-syntax next))))))]))
 
 (define-syntax define*-add!
   (lambda (stx)
     (syntax-parse stx
       [(define* (f:id . args) body:expr ...)
        (match-define (define*-binding
-                       (app syntax-local-introduce id*)
+                       (app syntax-local-introduce box-id*)
                        (app syntax-local-introduce clauses*)
                        (app syntax-local-introduce next*))
          (get-define*-binding #'f))
-       (define/syntax-parse id id*)
+       (define/syntax-parse box-id box-id*)
        (define/syntax-parse (cls ...) clauses*)
        (define/syntax-parse next next*)
        (define/syntax-parse next-next (generate-temporary #'f))
        (define/syntax-parse new-clause #'[args body ...])
        (define/syntax-parse new-clauses #'(cls ... new-clause))
-       (define/syntax-parse f-box id*)
        (define/syntax-parse match-lambda-ish
          (clauses->match-lambda-ish #'new-clauses))
        #'(begin
            (define-syntax next
-             (define*-binding (quote-syntax id) (quote-syntax new-clauses) (quote-syntax next-next)))
-           (set-box! f-box (procedure-rename match-lambda-ish 'f)))]
+             (define*-binding (quote-syntax box-id) (quote-syntax new-clauses) (quote-syntax next-next)))
+           (set-box! box-id (procedure-rename match-lambda-ish 'f)))]
       )))
 
 (define-simple-macro (define* (f:id . args) body:expr ...+)
