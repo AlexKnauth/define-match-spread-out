@@ -1,4 +1,4 @@
-define-match-spread-out
+define-match-spread-out [![Build Status](https://travis-ci.org/AlexKnauth/define-match-spread-out.png?branch=master)](https://travis-ci.org/AlexKnauth/define-match-spread-out)
 ===
 
 A racket library that allows you to write code like this:
