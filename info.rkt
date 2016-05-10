@@ -2,7 +2,7 @@
 
 (define collection 'multi)
 
-(define deps '("base" "unstable-lib" "git://github.com/AlexKnauth/defpat"))
+(define deps '("base" "unstable-lib" "defpat"))
 
 (define build-deps '("rackunit-lib"))
 
