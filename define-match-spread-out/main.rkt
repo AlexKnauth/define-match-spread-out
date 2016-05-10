@@ -13,6 +13,20 @@
                      unstable/syntax
                      ))
 
+;; This file defines a `define*` macro that allows definitions to be
+;; spread across a file. To do this, it generates a "next" identifier.
+
+;; The "next" identifier will either be unbound or will be bound with
+;; a `define-syntax` to a compile-time value. If that value exists, it
+;; will be an instance of the `define*-binding` struct.
+
+;; The `define*-binding` itself contains a "next" id, which points to
+;; the next `define*-binding` instance after itself. If this next
+;; "next" id is bound, then the other contents of the current
+;; `define*-binding` instance are old and should be ignored. Instead
+;; it repeats the process with the next "next" id, which points to the
+;; next `define*-binding` instance.
+
 (begin-for-syntax
   ;; (define*-binding box-id clauses next-id)
   ;; box-id: Identifier ; points to a box at runtime containing the function
