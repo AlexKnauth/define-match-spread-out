@@ -11,6 +11,15 @@ A racket library that allows you to write code like this:
 That would be roughly equivalent to
 ```racket
 (define f
+  (match*-case-lambda
+    [[#t] 2]
+    [[#f] 3]
+    [[_] 0]
+    [[x y] x]))
+```
+Or, using just `case-lambda` and `match` variants:
+```racket
+(define f
   (case-lambda
     [(tmp)
      (match tmp
