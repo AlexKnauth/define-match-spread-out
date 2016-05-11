@@ -1,6 +1,8 @@
 define-match-spread-out [![Build Status](https://travis-ci.org/AlexKnauth/define-match-spread-out.png?branch=master)](https://travis-ci.org/AlexKnauth/define-match-spread-out)
 ===
 
+documentation: http://docs.racket-lang.org/define-match-spread-out/index.html
+
 A racket library that allows you to write code like this:
 ```racket
 (define* (f #t) 2)
