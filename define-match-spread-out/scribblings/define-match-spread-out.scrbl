@@ -9,6 +9,8 @@
 
 @title{define-match-spread-out}
 
+source code: @url{https://github.com/AlexKnauth/define-match-spread-out}
+
 @defmodule[define-match-spread-out]{
 This file provides the @racket[define*] form, which allows function
 definitions to be spread out across a file.
